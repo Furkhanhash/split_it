@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>splitit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;
+  --surface:#181c27;
+  --border:#252a3a;
+  --border-h:#353d55;
+  --text:#e8eaf0;
+  --text-mid:#8891aa;
+  --text-dim:#4a5270;
+  --lime:#c8f135;
+  --lime-dim:rgba(200,241,53,.12);
+  --green:#4ade80;
+  --green-dim:rgba(74,222,128,.12);
+  --red:#f87171;
+  --red-dim:rgba(248,113,113,.12);
+  --font:'Syne',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --r:12px; --r2:16px; --r3:20px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5;min-height:100vh}
+.app{max-width:700px;margin:0 auto;padding:28px 16px 100px}
+
+/* ── Header ── */
+.hdr{margin-bottom:28px}
+.logo{font-size:30px;font-weight:800;letter-spacing:-.04em;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo-accent{color:var(--lime)}
+.ai-pill{display:inline-flex;align-items:center;gap:5px;background:var(--lime-dim);color:var(--lime);
+  border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.hdr-sub{font-size:12px;color:var(--text-dim);font-family:var(--mono)}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:22px;margin-bottom:12px}
+.sec-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-dim);font-family:var(--mono);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-num{border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700}
+.sec-num.lime{background:var(--lime-dim);color:var(--lime)}
+.sec-num.blue{background:rgba(56,189,248,.12);color:#38bdf8}
+.sec-num.green{background:rgba(163,230,53,.10);color:#a3e635}
+.sec-tag{background:rgba(255,255,255,.05);border-radius:6px;padding:2px 8px;color:var(--text-mid)}
+.badge-ai{margin-left:auto;font-size:10px;font-weight:700;font-family:var(--mono);color:var(--lime);letter-spacing:.06em}
+
+/* ── Inputs ── */
+.inp{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r);
+  font-family:var(--font);font-size:14px;background:rgba(255,255,255,.04);
+  outline:none;color:var(--text);transition:border-color .15s}
+.inp:focus{border-color:var(--border-h);background:rgba(255,255,255,.07)}
+.inp-price{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;
+  font-family:var(--mono);font-size:13px;text-align:right;padding:5px 8px;
+  width:86px;outline:none;color:var(--text);-moz-appearance:textfield}
+.inp-price::-webkit-outer-spin-button,.inp-price::-webkit-inner-spin-button{-webkit-appearance:none}
+.price-wrap{position:relative;flex-shrink:0}
+.price-wrap .sym{position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--text-dim);font-size:12px;font-family:var(--mono);pointer-events:none}
+.price-wrap .inp-price{padding-left:18px}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r);
+  border:none;font-family:var(--font);font-weight:700;font-size:13px;cursor:pointer;
+  transition:all .15s;white-space:nowrap}
+.btn-lime{background:var(--lime);color:#0f1117}
+.btn-lime:hover{background:#d9f94d;transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,241,53,.25)}
+.btn-lime:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border-h);color:var(--text);background:rgba(255,255,255,.04)}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:10px}
+.btn-icon{width:26px;height:26px;padding:0;border-radius:6px;background:none;border:none;
+  cursor:pointer;color:var(--text-dim);font-size:14px;display:flex;align-items:center;justify-content:center;
+  transition:color .15s;margin-top:3px}
+.btn-icon:hover{color:var(--red)}
+
+/* ── Upload ── */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r2);padding:38px 20px;
+  text-align:center;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.02)}
+.drop-zone:hover,.drop-zone.drag{border-color:#8fb00e;background:rgba(200,241,53,.06)}
+.drop-icon{font-size:36px;margin-bottom:8px;line-height:1}
+.drop-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--text-dim);font-family:var(--mono)}
+
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.file-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--border);border-radius:14px;padding:10px 12px;transition:border-color .15s}
+.file-row:hover{border-color:var(--border-h)}
+.file-left{display:flex;align-items:center;gap:10px;min-width:0}
+.thumb{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;
+  overflow:hidden;flex-shrink:0;font-size:20px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.fname{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;font-size:13px}
+.fmeta{font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px}
+
+.scan-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.scan-st{font-size:12px;font-family:var(--mono);color:var(--text-dim)}
+.scan-st.ok{color:var(--green)}.scan-st.err{color:var(--red)}
+
+/* ── Spinner ── */
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(15,17,23,.3);
+  border-top-color:#0f1117;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px}
+
+/* ── People ── */
+.people-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px}
+.p-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px 7px 10px;
+  border-radius:999px;border:1px solid var(--border);font-weight:600;font-size:13px;transition:border-color .15s}
+.p-chip:hover{border-color:var(--border-h)}
+.pdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.p-rm{width:17px;height:17px;border-radius:50%;border:none;background:rgba(255,255,255,.08);
+  color:var(--text-mid);font-size:10px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;line-height:1;transition:all .15s}
+.p-rm:hover{background:var(--red);color:#0f1117}
+.add-row{display:flex;gap:8px}
+
+/* ── Items ── */
+.item-card{border-bottom:1px solid var(--border);padding:12px 0}
+.item-card:last-of-type{border-bottom:none}
+.item-grid{display:grid;grid-template-columns:1fr 86px 26px;gap:8px;align-items:start}
+.iname{background:transparent;border:none;border-bottom:1px solid var(--border);
+  font-family:var(--font);font-weight:600;font-size:14px;width:100%;outline:none;
+  color:var(--text);padding-bottom:3px;transition:border-color .15s}
+.iname:focus{border-bottom-color:var(--border-h)}
+.assign-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+
+.all-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;
+  border:1px solid var(--border);font-size:11px;font-weight:700;cursor:pointer;
+  color:var(--text-dim);background:transparent;transition:all .15s;user-select:none;font-family:var(--mono)}
+.all-chip.on{border-color:rgba(200,241,53,.6);background:var(--lime-dim);color:var(--lime)}
+.a-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;
+  border:1px solid var(--border);background:transparent;font-size:11px;font-weight:600;
+  cursor:pointer;color:var(--text-dim);transition:all .15s;user-select:none}
+.a-chip.on{color:var(--text)}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);flex-shrink:0;transition:all .15s}
+
+.add-item-row{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* ── Summary ── */
+.summary{background:linear-gradient(135deg,#181c27 0%,#1a1f2e 100%);
+  border:1px solid var(--border);border-radius:var(--r3);padding:24px;margin-top:4px}
+.sum-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.sum-lbl{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-dim);font-family:var(--mono)}
+.sum-grand{font-size:11px;font-family:var(--mono);color:var(--text-dim)}
+.sum-grand strong{color:var(--text);font-weight:700}
+.sum-row{padding:14px 0;border-bottom:1px solid var(--border)}
+.sum-row:last-of-type{border-bottom:none}
+.sum-person{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sum-name{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
+.sdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sum-amt{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--lime)}
+.pbar-bg{height:3px;background:var(--border);border-radius:999px;overflow:hidden}
+.pbar{height:100%;border-radius:999px;transition:width .4s ease}
+
+/* ── Store info strip ── */
+.store-strip{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:13px}
+.store-strip .sl{color:var(--text-dim);font-family:var(--mono);font-size:11px;margin-right:4px}
+.store-strip .sv{font-weight:600}
+.store-strip .sdiv{width:1px;height:14px;background:var(--border)}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);
+  padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:600;font-family:var(--mono);
+  opacity:0;transition:all .3s ease;pointer-events:none;z-index:9999;white-space:nowrap;
+  border:1px solid var(--border);background:#1e2333;color:var(--text)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:#7f1d1d;border-color:var(--red);color:#fca5a5}
+.toast.ok2{background:#14532d;border-color:var(--green);color:#86efac}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.card{animation:slideUp .35s ease both}
+.card:nth-child(1){animation-delay:.04s}
+.card:nth-child(2){animation-delay:.08s}
+.card:nth-child(3){animation-delay:.12s}
+.card:nth-child(4){animation-delay:.16s}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="hdr">
+    <div class="logo">
+      split<span class="logo-accent">it</span>
+      <span class="ai-pill">✦ gemini</span>
+    </div>
+    <div class="hdr-sub">// local receipt scanner · runs on your machine</div>
+  </header>
+
+  <!-- 01 Upload -->
+  <div class="card">
+    <div class="sec-label">
+      <span class="sec-num lime">01</span>
+      <span class="sec-tag">Receipt</span>
+      <span class="badge-ai">AI READS ITEMS</span>
+    </div>
+
+    <input type="file" id="fileInput" multiple accept="image/*,application/pdf" style="display:none"/>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <button class="btn btn-lime" onclick="openPicker()">+ Add files</button>
+      <button class="btn btn-ghost btn-sm" id="clearBtn" onclick="clearUploads()" disabled>Clear all</button>
+      <span id="queueMeta" class="scan-st"></span>
+    </div>
+
+    <div id="dropZone" class="drop-zone" onclick="openPicker()">
+      <div class="drop-icon">📷</div>
+      <div class="drop-title">Drop receipt photo(s) here</div>
+      <div class="drop-sub">JPG · PNG · WEBP · PDF</div>
+    </div>
+
+    <div id="fileList" class="file-list" style="display:none"></div>
+
+    <div class="scan-row">
+      <button class="btn btn-lime" id="scanBtn" onclick="scanReceipt()" disabled>✦ Scan Receipt</button>
+      <span id="scanSt" class="scan-st"></span>
+    </div>
+  </div>
+
+  <!-- 02 People -->
+  <div class="card">
+    <div class="sec-label">
+      <span class="sec-num blue">02</span>
+      <span class="sec-tag">Who's Splitting?</span>
+    </div>
+    <div class="people-wrap" id="peoplePills"></div>
+    <div class="add-row">
+      <input class="inp" id="personInput" placeholder="Add person name…" maxlength="28"
+        onkeydown="if(event.key==='Enter')addPerson()"/>
+      <button class="btn btn-lime btn-sm" onclick="addPerson()">+ Add</button>
+    </div>
+  </div>
+
+  <!-- 03 Items -->
+  <div class="card">
+    <div class="sec-label">
+      <span class="sec-num green">03</span>
+      <span class="sec-tag">Items &amp; Assignment</span>
+    </div>
+    <div id="storeStrip" style="display:none"></div>
+    <div id="itemsList"></div>
+    <div class="add-item-row">
+      <input class="inp" id="newItemName" placeholder="Item name…"
+        onkeydown="if(event.key==='Enter')addManualItem()"/>
+      <div class="price-wrap">
+        <span class="sym">$</span>
+        <input class="inp-price" type="number" step="0.01" id="newItemPrice" placeholder="0.00"/>
+      </div>
+      <button class="btn btn-lime btn-sm" onclick="addManualItem()">+ Add</button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div id="summaryWrap"></div>
+
+</div><!-- /app -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let uploads    = [];
+let uploadMode = 'none';
+let people     = [{name:'Me',color:'#f97316'},{name:'Friend',color:'#38bdf8'}];
+let items      = [];
+let nextId     = 0;
+let storeInfo  = {store:'',tax:0,discount:0,tip:0,total:0};
+
+const COLORS = ['#f97316','#38bdf8','#a3e635','#fbbf24','#c084fc','#f472b6','#34d399','#fb7185'];
+
+// ── Helpers ────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function getItem(id){ return items.find(x=>x.id===id); }
+
+function toast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `toast ${type} show`;
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='toast', 3200);
+}
+
+// ── File handling ──────────────────────────────────────────────
+function openPicker(){ document.getElementById('fileInput').click(); }
+
+document.getElementById('fileInput').addEventListener('change', async e=>{
+  await addFiles(Array.from(e.target.files||[]));
+  e.target.value = '';
+});
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', ()=>dz.classList.remove('drag'));
+dz.addEventListener('drop', async e=>{ e.preventDefault(); dz.classList.remove('drag'); await addFiles(Array.from(e.dataTransfer.files)); });
+
+async function toDataURL(file){
+  return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); });
+}
+
+async function addFiles(files){
+  const pdfs = files.filter(f=>f.type==='application/pdf');
+  const imgs = files.filter(f=>f.type!=='application/pdf');
+
+  if(pdfs.length && imgs.length){ toast('Upload images OR one PDF, not both','err'); return; }
+
+  if(pdfs.length){
+    if(pdfs.length>1){ toast('Only one PDF allowed','err'); return; }
+    if(uploadMode==='images' && uploads.length){ toast('Clear images before adding a PDF','err'); return; }
+    const f=pdfs[0], dataUrl=await toDataURL(f);
+    uploads=[{name:f.name,b64:dataUrl.split(',')[1],type:'application/pdf',dataUrl,size:f.size||0}];
+    uploadMode='pdf';
+    renderUploads(); return;
+  }
+
+  if(imgs.length){
+    if(uploadMode==='pdf' && uploads.length){ toast('Clear PDF before adding images','err'); return; }
+    uploadMode='images';
+    for(const f of imgs){
+      const dataUrl=await toDataURL(f);
+      uploads.push({name:f.name,b64:dataUrl.split(',')[1],type:f.type||'image/jpeg',dataUrl,size:f.size||0});
+    }
+    renderUploads();
+  }
+}
+
+function clearUploads(){ uploads=[]; uploadMode='none'; renderUploads(); }
+
+function removeUpload(i){
+  uploads.splice(i,1);
+  if(!uploads.length) uploadMode='none';
+  renderUploads();
+}
+
+function renderUploads(){
+  const has = uploads.length>0;
+  document.getElementById('scanBtn').disabled = !has;
+  document.getElementById('clearBtn').disabled = !has;
+  document.getElementById('queueMeta').textContent = !has ? '' : uploadMode==='pdf' ? '1 PDF queued' : `${uploads.length} image(s) queued`;
+
+  const list = document.getElementById('fileList');
+  if(!has){ list.style.display='none'; list.innerHTML=''; return; }
+  list.style.display='flex';
+  list.innerHTML = uploads.map((u,i)=>{
+    const isPdf = u.type==='application/pdf';
+    const thumb = isPdf
+      ? `<div class="thumb">📄</div>`
+      : `<div class="thumb"><img src="${u.dataUrl}" alt=""></div>`;
+    return `
+      <div class="file-row">
+        <div class="file-left">
+          ${thumb}
+          <div>
+            <div class="fname">${esc(u.name)}</div>
+            <div class="fmeta">${isPdf?'PDF':'IMG'} · ${(u.size/1024).toFixed(0)} KB</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removeUpload(${i})">Remove</button>
+      </div>`;
+  }).join('');
+}
+
+// ── Scan (hits local server) ───────────────────────────────────
+async function scanReceipt(){
+  if(!uploads.length){ toast('Add a receipt first','err'); return; }
+
+  const btn = document.getElementById('scanBtn');
+  const st  = document.getElementById('scanSt');
+  btn.disabled = true;
+  st.innerHTML = '<span class="spinner"></span>Asking Gemini…';
+  st.className = 'scan-st';
+
+  try{
+    let endpoint, payload;
+    if(uploadMode==='images' && uploads.length>1){
+      endpoint = '/parse_multi';
+      payload  = {images: uploads.map(u=>({image_b64:u.b64, media_type:u.type}))};
+    } else {
+      endpoint = '/parse';
+      payload  = {image_b64:uploads[0].b64, media_type:uploads[0].type};
+    }
+
+    const res  = await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error||`Server error ${res.status}`);
+
+    const data = json.data;
+    storeInfo  = {store:data.store||'',tax:data.tax||0,discount:data.discount||0,tip:data.tip||0,total:data.total||0};
+
+    items = (data.items||[]).map(it=>({
+      id:    nextId++,
+      name:  it.name||'Item',
+      price: Number(it.price)||0,
+      who:   people.map(p=>p.name),
+      lastWho: null
+    }));
+
+    renderStoreStrip();
+    renderItems();
+    st.textContent = `✓ ${items.length} items found`;
+    st.className   = 'scan-st ok';
+    toast(`Scanned ${items.length} items!`, 'ok2');
+
+  } catch(e){
+    st.textContent = `✕ ${e.message}`;
+    st.className   = 'scan-st err';
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Store strip ────────────────────────────────────────────────
+function renderStoreStrip(){
+  const el = document.getElementById('storeStrip');
+  const s  = storeInfo;
+  if(!s.store && !s.total){ el.style.display='none'; return; }
+
+  const parts = [];
+  if(s.store)    parts.push(`<span class="sl">STORE</span><span class="sv">${esc(s.store)}</span>`);
+  if(s.total)    parts.push(`<span class="sl">TOTAL</span><span class="sv">$${s.total.toFixed(2)}</span>`);
+  if(s.tax)      parts.push(`<span class="sl">TAX</span><span class="sv">$${s.tax.toFixed(2)}</span>`);
+  if(s.discount) parts.push(`<span class="sl">SAVED</span><span class="sv" style="color:var(--green)">$${s.discount.toFixed(2)}</span>`);
+  if(s.tip)      parts.push(`<span class="sl">TIP</span><span class="sv">$${s.tip.toFixed(2)}</span>`);
+
+  el.innerHTML = parts.join('<span class="sdiv"></span>');
+  el.style.display = 'flex';
+}
+
+// ── People ─────────────────────────────────────────────────────
+function addPerson(){
+  const inp  = document.getElementById('personInput');
+  const name = inp.value.trim();
+  if(!name) return;
+  if(people.find(p=>p.name.toLowerCase()===name.toLowerCase())) return;
+  people.push({name, color:COLORS[people.length % COLORS.length]});
+  inp.value = '';
+  normalizeAssignments();
+  renderPeople();
+  renderItems();
+}
+
+function removePerson(i){
+  people.splice(i,1);
+  normalizeAssignments();
+  renderPeople();
+  renderItems();
+}
+
+function normalizeAssignments(){
+  const names = people.map(p=>p.name);
+  items.forEach(it=>{
+    it.who     = (it.who||[]).filter(n=>names.includes(n));
+    it.lastWho = (it.lastWho||[]).filter(n=>names.includes(n));
+    if(!it.who.length) it.who = [...names];
+  });
+}
+
+function renderPeople(){
+  const el = document.getElementById('peoplePills');
+  el.innerHTML = '';
+  people.forEach((p,i)=>{
+    const d = document.createElement('div');
+    d.className = 'p-chip';
+    d.style.background = p.color+'14';
+    d.innerHTML = `
+      <span class="pdot" style="background:${p.color};box-shadow:0 0 6px ${p.color}88"></span>
+      <span>${esc(p.name)}</span>
+      <button class="p-rm" onclick="removePerson(${i})">✕</button>`;
+    el.appendChild(d);
+  });
+}
+
+// ── Toggles (in-place DOM) ─────────────────────────────────────
+function toggleWho(itemId, personName){
+  const it = getItem(itemId);
+  if(!it) return;
+  const idx = it.who.indexOf(personName);
+  if(idx !== -1){
+    if(it.who.length > 1){ it.lastWho=[...it.who]; it.who.splice(idx,1); }
+  } else {
+    it.lastWho=[...it.who]; it.who.push(personName);
+  }
+  updateItemChips(itemId);
+  renderSummary();
+}
+
+function toggleAll(itemId){
+  const it = getItem(itemId);
+  if(!it) return;
+  const allOn = it.who.length === people.length;
+  if(allOn){
+    const restore = (it.lastWho&&it.lastWho.length) ? it.lastWho.filter(n=>people.some(p=>p.name===n)) : null;
+    it.who = (restore&&restore.length) ? restore : [people[0]?.name].filter(Boolean);
+  } else {
+    if(it.who.length!==people.length) it.lastWho=[...it.who];
+    it.who = people.map(p=>p.name);
+  }
+  updateItemChips(itemId);
+  renderSummary();
+}
+
+function updateItemChips(itemId){
+  const it   = getItem(itemId);
+  const card = document.querySelector(`.item-card[data-id="${itemId}"]`);
+  if(!it||!card) return;
+  const allOn = it.who.length===people.length;
+
+  const ac = card.querySelector('[data-all]');
+  if(ac) ac.className = `all-chip${allOn?' on':''}`;
+
+  // select chips by data-item + data-person; compare value directly (no CSS.escape needed)
+  card.querySelectorAll('.a-chip[data-person]').forEach(chip=>{
+    const pName = chip.dataset.person;
+    const p     = people.find(x=>x.name===pName);
+    if(!p) return;
+    const on = it.who.includes(pName);
+    chip.className = `a-chip${on?' on':''}`;
+    chip.style.borderColor = on ? p.color+'60' : '';
+    chip.style.background  = on ? p.color+'18' : '';
+    chip.style.color       = on ? 'var(--text)' : '';
+    const dot = chip.querySelector('.cdot');
+    if(dot){ dot.style.background = on?p.color:'var(--text-dim)'; dot.style.boxShadow = on?`0 0 5px ${p.color}88`:'none'; }
+  });
+}
+
+// ── Render items ───────────────────────────────────────────────
+function renderItems(){
+  const el = document.getElementById('itemsList');
+  if(!items.length){
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-dim);font-family:var(--mono);padding:6px 0 10px">No items yet — scan a receipt or add manually below.</div>`;
+    renderSummary(); return;
+  }
+
+  el.innerHTML = items.map(it=>{
+    const allOn = it.who.length===people.length;
+    // data-person holds the raw name; data-item links back to item id
+    const chips = people.map(p=>{
+      const on = it.who.includes(p.name);
+      return `<span class="a-chip${on?' on':''}" data-person="${esc(p.name)}" data-item="${it.id}"
+        style="${on?`border-color:${p.color}60;background:${p.color}18;color:var(--text)`:''}">
+        <span class="cdot" style="background:${on?p.color:'var(--text-dim)'};box-shadow:${on?`0 0 5px ${p.color}88`:'none'}"></span>${esc(p.name)}</span>`;
+    }).join('');
+
+    return `
+      <div class="item-card" data-id="${it.id}">
+        <div class="item-grid">
+          <div>
+            <input class="iname" data-id="${it.id}" value="${esc(it.name)}"/>
+            <div class="assign-row">
+              <span class="all-chip${allOn?' on':''}" data-all="${it.id}">ALL</span>
+              ${chips}
+            </div>
+          </div>
+          <div class="price-wrap">
+            <span class="sym">$</span>
+            <input class="inp-price" type="number" step="0.01" data-id="${it.id}" value="${it.price.toFixed(2)}"/>
+          </div>
+          <button class="btn-icon" data-del="${it.id}">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.querySelectorAll('.iname').forEach(inp=>{
+    inp.addEventListener('change', function(){ const it=getItem(Number(this.dataset.id)); if(it) it.name=this.value; });
+  });
+  el.querySelectorAll('.inp-price').forEach(inp=>{
+    inp.addEventListener('change', function(){ const it=getItem(Number(this.dataset.id)); if(it){ it.price=parseFloat(this.value)||0; renderSummary(); }});
+  });
+
+  renderSummary();
+}
+
+// ── Single persistent delegated listener (set up once at init) ─
+document.getElementById('itemsList').addEventListener('click', function(e){
+  // Delete button
+  const delBtn = e.target.closest('[data-del]');
+  if(delBtn){ deleteItem(Number(delBtn.dataset.del)); return; }
+
+  // ALL chip
+  const allChip = e.target.closest('[data-all]');
+  if(allChip){ toggleAll(Number(allChip.dataset.all)); return; }
+
+  // Person chip — data-person is the name, data-item is the item id
+  const pChip = e.target.closest('.a-chip[data-person]');
+  if(pChip){ toggleWho(Number(pChip.dataset.item), pChip.dataset.person); return; }
+});
+
+function deleteItem(id){ items=items.filter(x=>x.id!==id); renderItems(); }
+
+function addManualItem(){
+  const nameEl  = document.getElementById('newItemName');
+  const priceEl = document.getElementById('newItemPrice');
+  const name    = nameEl.value.trim();
+  if(!name) return;
+  items.push({id:nextId++,name,price:parseFloat(priceEl.value)||0,who:people.map(p=>p.name),lastWho:null});
+  nameEl.value=''; priceEl.value='';
+  renderItems();
+}
+
+// ── Summary ────────────────────────────────────────────────────
+function renderSummary(){
+  const wrap = document.getElementById('summaryWrap');
+  if(!people.length){ wrap.innerHTML=''; return; }
+
+  const totals = {};
+  people.forEach(p=>totals[p.name]=0);
+  items.forEach(it=>{
+    const share = it.who.length ? it.price/it.who.length : 0;
+    it.who.forEach(n=>{ if(totals[n]!=null) totals[n]+=share; });
+  });
+
+  const grandTotal = items.reduce((s,it)=>s+it.price,0);
+
+  // extra lines from receipt (tax/tip)
+  const extras = [];
+  if(storeInfo.tax)      extras.push(`<span style="color:var(--text-dim);font-family:var(--mono);font-size:11px">tax <strong style="color:var(--text)">$${storeInfo.tax.toFixed(2)}</strong></span>`);
+  if(storeInfo.tip)      extras.push(`<span style="color:var(--text-dim);font-family:var(--mono);font-size:11px">tip <strong style="color:var(--text)">$${storeInfo.tip.toFixed(2)}</strong></span>`);
+  if(storeInfo.discount) extras.push(`<span style="color:var(--text-dim);font-family:var(--mono);font-size:11px">saved <strong style="color:var(--green)">$${storeInfo.discount.toFixed(2)}</strong></span>`);
+
+  wrap.innerHTML = `
+    <div class="summary">
+      <div class="sum-hdr">
+        <div class="sum-lbl">// totals</div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          ${extras.join('')}
+          ${grandTotal>0?`<div class="sum-grand">items total <strong>$${grandTotal.toFixed(2)}</strong></div>`:''}
+        </div>
+      </div>
+      ${people.map(p=>{
+        const pct = grandTotal>0 ? (totals[p.name]/grandTotal)*100 : 0;
+        return `
+          <div class="sum-row">
+            <div class="sum-person">
+              <div class="sum-name">
+                <span class="sdot" style="background:${p.color};box-shadow:0 0 8px ${p.color}88"></span>
+                ${esc(p.name)}
+              </div>
+              <div class="sum-amt">$${totals[p.name].toFixed(2)}</div>
+            </div>
+            ${grandTotal>0?`<div class="pbar-bg"><div class="pbar" style="width:${pct}%;background:${p.color};box-shadow:0 0 8px ${p.color}66"></div></div>`:''}
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── Init ───────────────────────────────────────────────────────
+renderUploads();
+renderPeople();
+renderItems();
+</script>
+</body>
+</html>
