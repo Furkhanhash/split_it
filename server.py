@@ -38,11 +38,12 @@ PROMPT = (
     "Return ONLY a JSON object matching the provided schema.\n\n"
     "Rules:\n"
     "- Human-readable item names (Green Grapes not GRN GRPS)\n"
-    "- price = final price paid for that item line (after per-item discounts)\n"
+    "- price = TOTAL line price (unit price × qty, after discounts)\n"
+    "- qty = quantity of that item (default 1 if not shown)\n"
     "- discount = total savings/instant savings shown on receipt (informational)\n"
     "- Do NOT include subtotal/total/tax/tip rows as items\n"
     "- Round all numbers to 2 decimals\n"
-    "- Use 0 for unknown numeric values\n"
+    "- Use 0 for unknown numeric values, 1 for unknown qty\n"
 )
 
 RECEIPT_SCHEMA = {
@@ -56,8 +57,9 @@ RECEIPT_SCHEMA = {
                 "properties": {
                     "name":  {"type": "string"},
                     "price": {"type": "number"},
+                    "qty":   {"type": "number"},
                 },
-                "required": ["name", "price"],
+                "required": ["name", "price", "qty"],
                 "additionalProperties": False,
             },
         },
@@ -70,7 +72,6 @@ RECEIPT_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def clamp_money(x):
     try:
         v = float(x)
@@ -79,7 +80,6 @@ def clamp_money(x):
         return round(v + 1e-9, 2)
     except Exception:
         return 0.0
-
 
 def normalize_receipt(d):
     out = {
@@ -103,9 +103,8 @@ def normalize_receipt(d):
         upper = name.upper()
         if any(k in upper for k in ["SUBTOTAL", "TOTAL", "TAX", "TIP", "CHANGE", "BALANCE DUE"]):
             continue
-        out["items"].append({"name": name, "price": price})
+        out["items"].append({"name": name, "price": price, "qty": max(1, int(float(it.get("qty", 1) or 1)))})
     return out
-
 
 def parse_with_gemini(img_bytes: bytes, media_type: str):
     client = genai.Client(api_key=API_KEY)

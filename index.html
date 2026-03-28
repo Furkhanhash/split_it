@@ -151,6 +151,28 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 
 .add-item-row{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 
+/* ── Qty + Split ── */
+.item-meta{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.qty-badge{display:inline-flex;align-items:center;background:rgba(251,146,60,.12);color:#fb923c;
+  border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.split-btn{display:inline-flex;align-items:center;gap:4px;background:transparent;
+  border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;
+  font-weight:700;font-family:var(--mono);color:var(--text-dim);cursor:pointer;transition:all .15s}
+.split-btn:hover{border-color:var(--lime);color:var(--lime);background:var(--lime-dim)}
+.split-label{font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:3px}
+
+/* ── Export buttons ── */
+.export-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+.btn-copy{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--r);
+  border:1px solid var(--border);background:transparent;font-family:var(--font);font-weight:700;
+  font-size:12px;cursor:pointer;color:var(--text-mid);transition:all .15s;white-space:nowrap}
+.btn-copy:hover{border-color:var(--lime);color:var(--lime);background:var(--lime-dim)}
+.btn-sw{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--r);
+  border:1px solid rgba(73,197,128,.3);background:rgba(73,197,128,.08);font-family:var(--font);
+  font-weight:700;font-size:12px;cursor:pointer;color:#49c580;transition:all .15s;white-space:nowrap;
+  text-decoration:none}
+.btn-sw:hover{background:rgba(73,197,128,.16);border-color:rgba(73,197,128,.6)}
+
 /* ── Summary ── */
 .summary{background:linear-gradient(135deg,#181c27 0%,#1a1f2e 100%);
   border:1px solid var(--border);border-radius:var(--r3);padding:24px;margin-top:4px}
@@ -279,7 +301,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 // ── State ──────────────────────────────────────────────────────
 let uploads    = [];
 let uploadMode = 'none';
-let people     = [{name:'Me',color:'#f97316'},{name:'Nitheesh',color:'#38bdf8'},{name:'Harish',color:'#a3e636'},{name:'Divya',color:'#fbbf24'}];
+let people     = [{name:'Syed',color:'#f97316'},{name:'Nitheesh',color:'#38bdf8'},{name:'Harish',color:'#a3e636'},{name:'Divya',color:'#fbbf24'},{name:'Subham',color:'#c084fc'},{name:'Mouli',color:'#f472b6'}];
 let items      = [];
 let nextId     = 0;
 let storeInfo  = {store:'',tax:0,discount:0,tip:0,total:0};
@@ -403,12 +425,20 @@ async function scanReceipt(){
     storeInfo  = {store:data.store||'',tax:data.tax||0,discount:data.discount||0,tip:data.tip||0,total:data.total||0};
 
     items = (data.items||[]).map(it=>({
-      id:    nextId++,
-      name:  it.name||'Item',
-      price: Number(it.price)||0,
-      who:   people.map(p=>p.name),
-      lastWho: null
+      id:         nextId++,
+      name:       it.name||'Item',
+      price:      Number(it.price)||0,
+      qty:        Math.max(1, parseInt(it.qty)||1),
+      who:        people.map(p=>p.name),
+      lastWho:    null,
+      splitChild: false
     }));
+
+    // auto-add tax and tip as regular assignable item rows
+    if(data.tax && data.tax>0)
+      items.push({id:nextId++, name:'Tax', price:Number(data.tax), qty:1, who:people.map(p=>p.name), lastWho:null, splitChild:false});
+    if(data.tip && data.tip>0)
+      items.push({id:nextId++, name:'Tip', price:Number(data.tip), qty:1, who:people.map(p=>p.name), lastWho:null, splitChild:false});
 
     renderStoreStrip();
     renderItems();
@@ -486,6 +516,24 @@ function renderPeople(){
   });
 }
 
+// ── Split item into N rows ─────────────────────────────────────
+function splitItem(itemId){
+  const it  = getItem(itemId);
+  if(!it || it.qty<=1) return;
+  const unit = parseFloat((it.price / it.qty).toFixed(2));
+  const last = parseFloat((it.price - unit * (it.qty-1)).toFixed(2));
+  const idx  = items.findIndex(x=>x.id===itemId);
+  const rows = [];
+  for(let i=0;i<it.qty;i++){
+    rows.push({id:nextId++, name:`${it.name} #${i+1}`,
+      price: i===it.qty-1 ? last : unit,
+      qty:1, who:people.map(p=>p.name), lastWho:null, splitChild:true});
+  }
+  items.splice(idx,1,...rows);
+  renderItems();
+  toast(`Split into ${it.qty} rows`,'ok2');
+}
+
 // ── Toggles (in-place DOM) ─────────────────────────────────────
 function toggleWho(itemId, personName){
   const it = getItem(itemId);
@@ -549,7 +597,6 @@ function renderItems(){
 
   el.innerHTML = items.map(it=>{
     const allOn = it.who.length===people.length;
-    // data-person holds the raw name; data-item links back to item id
     const chips = people.map(p=>{
       const on = it.who.includes(p.name);
       return `<span class="a-chip${on?' on':''}" data-person="${esc(p.name)}" data-item="${it.id}"
@@ -557,11 +604,16 @@ function renderItems(){
         <span class="cdot" style="background:${on?p.color:'var(--text-dim)'};box-shadow:${on?`0 0 5px ${p.color}88`:'none'}"></span>${esc(p.name)}</span>`;
     }).join('');
 
+    const qtyRow = it.qty>1 && !it.splitChild
+      ? `<div class="item-meta"><span class="qty-badge">×${it.qty}</span><button class="split-btn" data-split="${it.id}">⋮ Split into ${it.qty}</button></div>`
+      : it.splitChild ? `<div class="split-label">↳ split row</div>` : '';
+
     return `
       <div class="item-card" data-id="${it.id}">
         <div class="item-grid">
           <div>
-            <input class="iname" data-id="${it.id}" value="${esc(it.name)}"/>
+            <input class="iname" data-id="${it.id}" value="${esc(it.name)}" style="${it.splitChild?'color:var(--text-mid);font-size:13px':''}"/>
+            ${qtyRow}
             <div class="assign-row">
               <span class="all-chip${allOn?' on':''}" data-all="${it.id}">ALL</span>
               ${chips}
@@ -588,16 +640,16 @@ function renderItems(){
 
 // ── Single persistent delegated listener (set up once at init) ─
 document.getElementById('itemsList').addEventListener('click', function(e){
-  // Delete button
-  const delBtn = e.target.closest('[data-del]');
+  const delBtn=e.target.closest('[data-del]');
   if(delBtn){ deleteItem(Number(delBtn.dataset.del)); return; }
 
-  // ALL chip
-  const allChip = e.target.closest('[data-all]');
+  const splitBtn=e.target.closest('[data-split]');
+  if(splitBtn){ splitItem(Number(splitBtn.dataset.split)); return; }
+
+  const allChip=e.target.closest('[data-all]');
   if(allChip){ toggleAll(Number(allChip.dataset.all)); return; }
 
-  // Person chip — data-person is the name, data-item is the item id
-  const pChip = e.target.closest('.a-chip[data-person]');
+  const pChip=e.target.closest('.a-chip[data-person]');
   if(pChip){ toggleWho(Number(pChip.dataset.item), pChip.dataset.person); return; }
 });
 
@@ -608,7 +660,7 @@ function addManualItem(){
   const priceEl = document.getElementById('newItemPrice');
   const name    = nameEl.value.trim();
   if(!name) return;
-  items.push({id:nextId++,name,price:parseFloat(priceEl.value)||0,who:people.map(p=>p.name),lastWho:null});
+  items.push({id:nextId++,name,price:parseFloat(priceEl.value)||0,qty:1,who:people.map(p=>p.name),lastWho:null,splitChild:false});
   nameEl.value=''; priceEl.value='';
   renderItems();
 }
@@ -626,6 +678,24 @@ function renderSummary(){
   });
 
   const grandTotal = items.reduce((s,it)=>s+it.price,0);
+
+  function buildExportText(){
+    const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const store = storeInfo.store || 'Receipt';
+    let txt = `${store} · ${date}\n\n`;
+    people.forEach(p=>{ txt += `${p.name}: $${totals[p.name].toFixed(2)}\n`; });
+    txt += `\nTotal: $${grandTotal.toFixed(2)}`;
+    return txt;
+  }
+  function copyToClipboard(){
+    navigator.clipboard.writeText(buildExportText())
+      .then(()=>toast('Copied to clipboard!','ok2'))
+      .catch(()=>toast('Copy failed','err'));
+  }
+  function openSplitwise(){
+    const desc = encodeURIComponent(storeInfo.store || 'Receipt');
+    window.open(`https://secure.splitwise.com/#/dashboard?popup=add-bill&description=${desc}&cost=${grandTotal.toFixed(2)}`, '_blank');
+  }
 
   // extra lines from receipt (tax/tip)
   const extras = [];
@@ -656,6 +726,11 @@ function renderSummary(){
             ${grandTotal>0?`<div class="pbar-bg"><div class="pbar" style="width:${pct}%;background:${p.color};box-shadow:0 0 8px ${p.color}66"></div></div>`:''}
           </div>`;
       }).join('')}
+      ${grandTotal>0?`
+      <div class="export-row">
+        <button class="btn-copy" onclick="copyToClipboard()">📋 Copy for WhatsApp</button>
+        <button class="btn-sw" onclick="openSplitwise()">↗ Open in Splitwise</button>
+      </div>`:''}
     </div>`;
 }
 
