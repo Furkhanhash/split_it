@@ -29,7 +29,7 @@ except ImportError:
 API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 PORT    = int(os.environ.get("PORT", 8765))   # Render sets $PORT; local fallback 8765
 HOST    = "0.0.0.0"                            # must bind 0.0.0.0 on Render (not localhost)
-MODEL   = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
+MODEL   = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
 MAX_REQUEST_BYTES = 16 * 1024 * 1024  # 16 MB
 
